@@ -7,8 +7,6 @@ use t::Util;
 use DBIx::QueryLog ();
 use DBI;
 
-DBIx::QueryLog->skip_bind(1);
-
 my $mysqld = t::Util->setup_mysqld
     or plan skip_all => $Test::mysqld::errstr || 'failed setup_mysqld';
 
@@ -23,9 +21,14 @@ my $dbh = DBI->connect(
 DBIx::QueryLog->begin;
 
 my $res = capture {
-    $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
+    $dbh->selectrow_hashref(<< 'SQL', undef, 'root');
+SELECT * FROM
+    user
+WHERE
+    User = ?
+SQL
 };
 
-like $res, qr/SELECT \* FROM user WHERE User = \? : \["root"\]/;
+like $res, qr/SELECT \* FROM\s+user\s+WHERE\s+User = 'root'/ms;
 
 done_testing;

@@ -8,6 +8,7 @@ inc/Module/Install/Include.pm
 inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
 inc/Module/Install/Repository.pm
+inc/Module/Install/TestTarget.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 inc/Test/More.pm
@@ -24,6 +25,8 @@ t/11_bind.t
 t/12_skip_bind.t
 t/13_threshold.t
 t/14_probability.t
+t/15_selectrow_array.t
+t/16_multi_line.t
 t/20_localizetion.t
 t/30_logger.t
 t/inner_class/via.t
@@ -34,6 +37,9 @@ t/mysql/11_do_dind.t
 t/mysql/12_do_skip_bind.t
 t/mysql/13_do_probability.t
 t/mysql/14_do_logger.t
+t/mysql/15_selectrow_array.t
+t/mysql/16_multi_line.t
+t/setup_mysqld.pl
 t/Util.pm
 xt/01_podspell.t
 xt/02_pod.t
