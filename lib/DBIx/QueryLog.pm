@@ -8,7 +8,7 @@ use DBI;
 use Data::Dump ();
 use Time::HiRes qw(gettimeofday tv_interval);
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_db_do                 = \&DBI::db::do;
@@ -71,7 +71,7 @@ for my $accessor (qw/logger threshold probability skip_bind/) {
     *{__PACKAGE__."::$accessor"} = sub {
         use strict 'refs';
         my ($class, $args) = @_;
-        return $container->{$accessor} unless $args;
+        return $container->{$accessor} unless @_ > 1;
         $container->{$accessor} = $args;
     };
 }
@@ -360,6 +360,12 @@ If you want to localize the scope are:
   DBIx::QueryLog->end;
 
 Now you could enable logging between `begin` and `end`.
+
+head2 LOG_LEVEL
+
+If you want to change log_level are:
+
+  $DBIx::QueryLog::LOG_LEVEL = 'info'; # default 'debug'
 
 =head1 AUTHOR
 
