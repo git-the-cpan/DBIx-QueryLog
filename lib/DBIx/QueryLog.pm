@@ -5,10 +5,9 @@ use warnings;
 use 5.008_001;
 
 use DBI;
-use Data::Dump ();
 use Time::HiRes qw(gettimeofday tv_interval);
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_db_do                 = \&DBI::db::do;
@@ -54,7 +53,7 @@ sub import {
 sub unimport {
     no warnings qw(redefine prototype);
     *DBI::st::execute = $org_execute;
-    *DBD::db::do = $org_db_do if $has_mysql;
+    *DBI::db::do = $org_db_do if $has_mysql;
     unless ($pp_mode) {
         *DBI::db::selectall_arrayref = $org_db_selectall_arrayref;
         *DBI::db::selectrow_arrayref = $org_db_selectrow_arrayref;
@@ -83,26 +82,20 @@ sub _st_execute {
         my $wantarray = wantarray ? 1 : 0;
         my $sth = shift;
 
-        my $probability = $class->probability;
+        my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($sth, @_);
         }
 
-        my $tfh;
         my $ret = $sth->{Statement};
-        if ($class->skip_bind) {
-            $ret .= ' : ' . Data::Dump::dump(\@_) if @_;
+        if ($container->{skip_bind}) {
+            local $" = ', ';
+            $ret .= " : [@_]" if @_;
         }
         else {
             my $dbh = $sth->{Database};
-            if ($dbh->{Driver}{Name} eq 'mysql') {
-                open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
-                $sth->trace('2|SQL', $tfh);
-            }
-            else {
-                my $i = 0;
-                $ret =~ s/\?/$dbh->quote($_[$i++])/eg;
-            }
+            my $i = 0;
+            $ret =~ s/\?/$dbh->quote($_[$i++])/eg;
         }
 
         my $begin = [gettimeofday];
@@ -111,7 +104,6 @@ sub _st_execute {
 
         $class->_logging($ret, $time);
 
-        close $tfh if $tfh;
         return $wantarray ? @$res : $res;
     };
 }
@@ -123,25 +115,19 @@ sub _select_array {
         my $wantarray = wantarray;
         my ($dbh, $stmt, $attr, @bind) = @_;
 
-        my $probability = $class->probability;
+        my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
-        my $tfh;
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
-        if ($class->skip_bind) {
-            $ret .= ' : ' . Data::Dump::dump(\@bind) if @bind;
+        if ($container->{skip_bind}) {
+            local $" = ', ';
+            $ret .= " : [@bind]" if @bind;
         }
         else {
-            if ($dbh->{Driver}{Name} eq 'mysql') {
-                open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
-                $dbh->trace('2|SQL', $tfh);
-            }
-            else {
-                my $i = 0;
-                $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
-            }
+            my $i = 0;
+            $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
         }
 
         my $begin = [gettimeofday];
@@ -156,10 +142,7 @@ sub _select_array {
 
         $class->_logging($ret, $time);
 
-        close $tfh if $tfh;
         if ($is_selectrow_array) {
-            use Data::Dumper;
-            warn Dumper $res;
             return $wantarray ? @$res : $res;
         }
         return $res;
@@ -171,35 +154,33 @@ sub _db_do {
 
     return sub {
         my $wantarray = wantarray ? 1 : 0;
-        my $dbh  = shift;
-        my $stmt = shift;
+        my ($dbh, $stmt, $attr, @bind) = @_;
 
         if ($dbh->{Driver}{Name} ne 'mysql') {
-            return $org->($dbh, $stmt, @_); 
+            return $org->($dbh, $stmt, $attr, @bind);
         }
 
-        my $probability = $class->probability;
+        my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
-            return $org->($dbh, $stmt, @_);
+            return $org->($dbh, $stmt, $attr, @bind);
         }
 
-        my $tfh;
         my $ret = $stmt;
-        if ($class->skip_bind) {
-            $ret .= ' : ' . Data::Dump::dump([ @_[1..$#_] ]) if @_ > 1;
+        if ($container->{skip_bind}) {
+            local $" = ', ';
+            $ret .= " : [@bind]" if @bind;
         }
         else {
-            open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
-            $dbh->trace('2|SQL', $tfh);
+            my $i = 0;
+            $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
         }
 
         my $begin = [gettimeofday];
-        my $res = $wantarray ? [$org->($dbh, $stmt, @_)] : scalar $org->($dbh, $stmt, @_);
+        my $res = $wantarray ? [$org->($dbh, $stmt, $attr, @bind)] : scalar $org->($dbh, $stmt, $attr, @bind);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
         $class->_logging($ret, $time);
 
-        close $tfh if $tfh;
         return $wantarray ? @$res : $res;
     };
 }
@@ -207,14 +188,21 @@ sub _db_do {
 sub _logging {
     my ($class, $ret, $time) = @_;
 
-    my $threshold = $class->threshold;
+    my $threshold = $container->{threshold};
     if (!$threshold || $time > $threshold) {
-        my $caller = $class->_caller();
+        my $i = 0;
+        my $caller = { pkg => '???', line => '???', file => '???' };
+        while (my @c = caller(++$i)) {
+            if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
+                $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
+                last;
+            }
+        }
+
         my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
             scalar(localtime), $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
 
-        my $logger = $class->logger;
-        if ($logger) {
+        if (my $logger = $container->{logger}) {
             $logger->log(
                 level   => $LOG_LEVEL,
                 message => $message,
@@ -229,54 +217,6 @@ sub _logging {
             print STDERR $message;
         }
     }
-}
-
-sub _caller {
-    my $i = 0;
-    my $caller = { pkg => '???', line => '???', file => '???' };
-    while (my @c = caller(++$i)) {
-        if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
-            $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
-            last;
-        }
-    }
-
-    return $caller;
-}
-
-package PerlIO::via::DBIx::QueryLogLayer;
-
-my $regex = qr/^Binding parameters: (.*)/ms;
-
-sub PUSHED {
-    my ($class, $mode, $fh) = @_;
-    bless \my($logger), $class;
-}
-
-sub OPEN {
-    my ($self, $path, $mode, $fh) = @_;
-    $$self = $path;
-    return 1;
-}
-
-sub WRITE {
-    my ($self, $buf, $fh) = @_;
-
-    return 0 unless $buf;
-
-    if ($buf =~ $regex) {
-        $buf = $1;
-        $buf =~ s/\n$//;
-        $$$self = $buf; # SQL
-    }
-
-    return 1;
-}
-
-sub CLOSE {
-    my $self = shift;
-    undef $$self;
-    return 1;
 }
 
 1;

@@ -23,9 +23,8 @@ recommends:
   DBD::sqlite: 0
 requires:
   DBI: 0
-  Data::Dump: 0
   perl: 5.8.1
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/xaicron/p5-DBIx-QueryLog.git
-version: 0.06
+version: 0.07

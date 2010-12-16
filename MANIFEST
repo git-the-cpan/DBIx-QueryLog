@@ -18,6 +18,11 @@ Makefile.PL
 MANIFEST			This list of files
 META.yml
 README
+script/mysql_bench.pl
+script/mysql_bench_skip_bind.pl
+script/profile.pl
+script/profile.sh
+script/sqlite_bench.pl
 t/00_compile.t
 t/01_accessors.t
 t/10_simple.t
@@ -30,7 +35,6 @@ t/16_multi_line.t
 t/20_localizetion.t
 t/30_logger.t
 t/40_accessors.t
-t/inner_class/via.t
 t/mysql/01_simple.t
 t/mysql/02_bind.t
 t/mysql/10_do.t
