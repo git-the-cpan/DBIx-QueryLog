@@ -44,6 +44,7 @@ t/mysql/13_do_probability.t
 t/mysql/14_do_logger.t
 t/mysql/15_selectrow_array.t
 t/mysql/16_multi_line.t
+t/mysql/17_limit.t
 t/setup_mysqld.pl
 t/Util.pm
 xt/01_podspell.t
