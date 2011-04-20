@@ -32,6 +32,7 @@ t/13_threshold.t
 t/14_probability.t
 t/15_selectrow_array.t
 t/16_multi_line.t
+t/18_bind_param.t
 t/20_localizetion.t
 t/30_logger.t
 t/40_accessors.t
@@ -45,6 +46,7 @@ t/mysql/14_do_logger.t
 t/mysql/15_selectrow_array.t
 t/mysql/16_multi_line.t
 t/mysql/17_limit.t
+t/mysql/18_bind_param.t
 t/setup_mysqld.pl
 t/Util.pm
 xt/01_podspell.t
