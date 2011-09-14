@@ -7,7 +7,7 @@ use 5.008_001;
 use DBI;
 use Time::HiRes qw(gettimeofday tv_interval);
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -153,6 +153,9 @@ sub _select_array {
     return sub {
         my $wantarray = wantarray;
         my ($dbh, $stmt, $attr, @bind) = @_;
+
+        no warnings qw(redefine prototype);
+        local *DBI::st::execute = $org_execute; # suppress duplicate logging
 
         my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
