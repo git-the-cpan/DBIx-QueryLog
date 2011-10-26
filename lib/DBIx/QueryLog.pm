@@ -9,9 +9,9 @@ use Time::HiRes qw(gettimeofday tv_interval);
 use Term::ANSIColor qw(colored);
 use Data::Dumper ();
 
-$ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MsWin32';
+$ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
