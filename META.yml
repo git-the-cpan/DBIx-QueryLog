@@ -4,10 +4,12 @@ author:
   - 'xaicron <xaicron {at} cpan.org>'
 build_requires:
   ExtUtils::MakeMaker: 6.42
+  Test::More: 0.96
+  Test::Requires: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: 'Module::Install version 1.01'
+generated_by: 'Module::Install version 1.02'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -21,10 +23,12 @@ no_index:
 recommends:
   DBD::mysql: 0
   DBD::sqlite: 0
+  SQL::Tokenizer: 0
 requires:
   DBI: 0
   perl: 5.8.1
 resources:
+  bugtracker: https://github.com/xaicron/p5-DBIx-QueryLog/issues
   license: http://dev.perl.org/licenses/
-  repository: git://github.com/xaicron/p5-DBIx-QueryLog.git
-version: 0.12
+  repository: https://github.com/xaicron/p5-DBIx-QueryLog
+version: 0.13

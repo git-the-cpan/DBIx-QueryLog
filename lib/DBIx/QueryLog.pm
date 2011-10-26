@@ -6,8 +6,12 @@ use 5.008_001;
 
 use DBI;
 use Time::HiRes qw(gettimeofday tv_interval);
+use Term::ANSIColor qw(colored);
+use Data::Dumper ();
 
-our $VERSION = '0.12';
+$ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MsWin32';
+
+our $VERSION = '0.13';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -23,6 +27,7 @@ our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
 );
 our $LOG_LEVEL = 'debug';
+our $OUTPUT    = *STDERR;
 
 my $st_execute;
 my $st_bind_param;
@@ -70,7 +75,7 @@ sub unimport {
 *end   = \&unimport;
 
 my $container = {};
-for my $accessor (qw/logger threshold probability skip_bind/) {
+for my $accessor (qw/logger threshold probability skip_bind color useqq compress/) {
     no strict 'refs';
     *{__PACKAGE__."::$accessor"} = sub {
         use strict 'refs';
@@ -266,22 +271,42 @@ sub _logging {
             }
         }
 
+        if ($container->{useqq} || $ENV{DBIX_QUERYLOG_USEQQ}) {
+            local $Data::Dumper::Useqq  = 1;
+            local $Data::Dumper::Terse  = 1;
+            local $Data::Dumper::Indent = 0;
+            $ret = Data::Dumper::Dumper($ret);
+        }
+
+        if ($container->{compress} || $ENV{DBIX_QUERYLOG_COMPRESS}) {
+            require SQL::Tokenizer;
+            $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
+        }
+
+        my $color = $container->{color} || $ENV{DBIX_QUERYLOG_COLOR};
+        my $localtime = do {
+            my ($sec, $min, $hour, $day, $mon, $year) = localtime;
+            sprintf '%d-%02d-%02dT%02d:%02d:%02d', $year + 1900, $mon + 1, $day, $hour, $min, $sec;
+        };
         my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
-            scalar(localtime), $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
+            $localtime, $caller->{pkg}, $time,
+            $color ? colored([$color], $ret) : $ret,
+            $caller->{file}, $caller->{line};
 
         if (my $logger = $container->{logger}) {
             $logger->log(
                 level   => $LOG_LEVEL,
                 message => $message,
                 params  => {
-                    time => $time,
-                    sql  => $ret,
+                    localtime => $localtime,
+                    time      => $time,
+                    sql       => $ret,
                     %$caller,
-                }
+                },
             );
         }
         else {
-            print STDERR $message;
+            print {$OUTPUT} $message;
         }
     }
 }
@@ -344,6 +369,32 @@ The statement and bind-params are logs separately.
   my $row = $dbh->do(...);
   # => 'SELECT * FROM people WHERE user_id = ?' : [1986]
 
+=item color
+
+If you want to colored SQL output are:
+
+  DBIx::QueryLog->color('green');
+
+And, you can also specify C<< DBIX_QUERYLOG_COLOR >> environment variable.
+
+=item useqq
+
+using C<< $Data::Dumper::Useqq >>.
+
+  DBIx::QueryLog->useqq(1);
+
+And, you can also specify C<< DBIX_QUERYLOG_USEQQ >> environment variable.
+
+=item compress
+
+Compress SQL using L<< SQL::Tokenizer >>.
+
+  DBIx::QueryLog->compress(1);
+  #  FROM: SELECT          *  FROM      foo WHERE bar = 'baz'
+  #  TO  : SELECT * FROM foo WHERE bar = 'baz'
+
+And, you can also specify C<< DBIX_QUERYLOG_COMPRESS >> environment variable.
+
 =item begin
 
 SEE ALSO L</Localization>
@@ -373,6 +424,15 @@ Now you could enable logging between `begin` and `end`.
 If you want to change log_level are:
 
   $DBIx::QueryLog::LOG_LEVEL = 'info'; # default 'debug'
+
+=head2 OUTPUT
+
+If you want to change log output are:
+
+  open my $fh, '>', 'dbix_query.log';
+  $DBIx::QueryLog::OUTPUT = $fh;
+
+Default C<< $OUTPUT >> is C<< STDERR >>.
 
 =head1 AUTHOR
 

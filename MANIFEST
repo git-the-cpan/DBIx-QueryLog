@@ -4,15 +4,11 @@ inc/Module/Install/AuthorTests.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Can.pm
 inc/Module/Install/Fetch.pm
-inc/Module/Install/Include.pm
 inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
-inc/Module/Install/Repository.pm
 inc/Module/Install/TestTarget.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
-inc/Test/More.pm
-inc/Test/Requires.pm
 lib/DBIx/QueryLog.pm
 Makefile.PL
 MANIFEST			This list of files
@@ -35,6 +31,10 @@ t/16_multi_line.t
 t/18_bind_param.t
 t/20_localizetion.t
 t/30_logger.t
+t/31_output.t
+t/32_color.t
+t/33_useqq.t
+t/34_compress.t
 t/40_accessors.t
 t/mysql/01_simple.t
 t/mysql/02_bind.t
