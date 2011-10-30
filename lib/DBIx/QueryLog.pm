@@ -11,7 +11,7 @@ use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -271,16 +271,16 @@ sub _logging {
             }
         }
 
+        if ($container->{compress} || $ENV{DBIX_QUERYLOG_COMPRESS}) {
+            require SQL::Tokenizer;
+            $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
+        }
+
         if ($container->{useqq} || $ENV{DBIX_QUERYLOG_USEQQ}) {
             local $Data::Dumper::Useqq  = 1;
             local $Data::Dumper::Terse  = 1;
             local $Data::Dumper::Indent = 0;
             $ret = Data::Dumper::Dumper($ret);
-        }
-
-        if ($container->{compress} || $ENV{DBIX_QUERYLOG_COMPRESS}) {
-            require SQL::Tokenizer;
-            $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
         }
 
         my $color = $container->{color} || $ENV{DBIX_QUERYLOG_COLOR};
