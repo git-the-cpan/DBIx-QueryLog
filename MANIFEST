@@ -34,8 +34,8 @@ t/30_logger.t
 t/31_output.t
 t/32_color.t
 t/33_useqq.t
-t/34_compress.t
-t/35_useqq_and_compress.t
+t/34_compact.t
+t/35_useqq_and_compact.t
 t/40_accessors.t
 t/mysql/01_simple.t
 t/mysql/02_bind.t
