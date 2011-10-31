@@ -11,7 +11,7 @@ use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -306,7 +306,19 @@ sub _logging {
             );
         }
         else {
-            print {$OUTPUT} $message;
+            if (ref $OUTPUT eq 'CODE') {
+                $OUTPUT->(
+                    level     => $LOG_LEVEL,
+                    message   => $message,
+                    localtime => $localtime,
+                    time      => $time,
+                    sql       => $ret,
+                    %$caller,
+                );
+            }
+            else {
+                print {$OUTPUT} $message;
+            }
         }
     }
 }
@@ -431,6 +443,14 @@ If you want to change log output are:
 
   open my $fh, '>', 'dbix_query.log';
   $DBIx::QueryLog::OUTPUT = $fh;
+
+or you can specify code reference:
+
+  $DBIx::QueryLog::OUTPUT = sub {
+      my %params = @_;
+      printf "[%s] [%s] [%s] [%s] %s at %s line %s\n",
+        @params{qw/localtime level pkg time sql file line/};
+  };
 
 Default C<< $OUTPUT >> is C<< STDERR >>.
 
