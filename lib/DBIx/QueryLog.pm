@@ -11,7 +11,7 @@ use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -91,41 +91,26 @@ sub _st_execute {
     return sub {
         my $wantarray = wantarray ? 1 : 0;
         my $sth = shift;
+        my @params = @_;
+        my @types;
 
         my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
-            return $org->($sth, @_);
+            return $org->($sth, @params);
         }
 
         my $ret = $sth->{Statement};
-        if ($container->{skip_bind}) {
-            my @params;
-            if (@_) {
-                @params = @_;
+        if ($sth->{private_DBIx_QueryLog}) {
+            for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
+                my $value = $bind_param->[0];
+                push @params, $bind_param->[0];
+                push @types, $bind_param->[1]{TYPE};
             }
-            elsif ($sth->{private_DBIx_QueryLog}) {
-                for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
-                    my $value = $bind_param->[0];
-                    push @params, $value;
-                }
-            }
-            local $" = ', ';
-            $ret .= " : [@params]" if @params;
         }
-        else {
+
+        unless ($container->{skip_bind} && @params) {
             my $dbh = $sth->{Database};
-            if (@_) {
-                $ret = _bind($dbh, $ret, \@_);
-            }
-            elsif ($sth->{private_DBIx_QueryLog}) {
-                my (@params, @types);
-                for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
-                    my $value = $bind_param->[0];
-                    push @params, $bind_param->[0];
-                    push @types, $bind_param->[1]{TYPE};
-                }
-                $ret = _bind($dbh, $ret, \@params, \@types);
-            }
+            $ret = _bind($dbh, $ret, \@params, \@types);
         }
 
         $sth->{private_DBIx_QueryLog} = undef if $sth->{private_DBIx_QueryLog};
@@ -134,7 +119,7 @@ sub _st_execute {
         my $res = $wantarray ? [$org->($sth, @_)] : scalar $org->($sth, @_);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time);
+        $class->_logging($ret, $time, \@params);
 
         return $wantarray ? @$res : $res;
     };
@@ -168,11 +153,7 @@ sub _select_array {
         }
 
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
-        if ($container->{skip_bind}) {
-            local $" = ', ';
-            $ret .= " : [@bind]" if @bind;
-        }
-        else {
+        unless ($container->{skip_bind} && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
 
@@ -186,7 +167,7 @@ sub _select_array {
         }
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time);
+        $class->_logging($ret, $time, \@bind);
 
         if ($is_selectrow_array) {
             return $wantarray ? @$res : $res;
@@ -212,11 +193,7 @@ sub _db_do {
         }
 
         my $ret = $stmt;
-        if ($container->{skip_bind}) {
-            local $" = ', ';
-            $ret .= " : [@bind]" if @bind;
-        }
-        else {
+        unless ($container->{skip_bind} && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
 
@@ -224,7 +201,7 @@ sub _db_do {
         my $res = $wantarray ? [$org->($dbh, $stmt, $attr, @bind)] : scalar $org->($dbh, $stmt, $attr, @bind);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time);
+        $class->_logging($ret, $time, \@bind);
 
         return $wantarray ? @$res : $res;
     };
@@ -258,67 +235,77 @@ sub _bind {
 }
 
 sub _logging {
-    my ($class, $ret, $time) = @_;
+    my ($class, $ret, $time, $bind_params) = @_;
 
     my $threshold = $container->{threshold};
-    if (!$threshold || $time > $threshold) {
-        my $i = 0;
-        my $caller = { pkg => '???', line => '???', file => '???' };
-        while (my @c = caller(++$i)) {
-            if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
-                $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
-                last;
-            }
+    return unless !$threshold || $time > $threshold;
+
+    $bind_params ||= [];
+
+    my $i = 0;
+    my $caller = { pkg => '???', line => '???', file => '???' };
+    while (my @c = caller(++$i)) {
+        if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
+            $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
+            last;
         }
+    }
 
-        if ($container->{compact} || $ENV{DBIX_QUERYLOG_COMPACT}) {
-            require SQL::Tokenizer;
-            $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
-        }
+    my $sql = $ret;
+    if ($container->{skip_bind}) {
+        local $" = ', ';
+        $ret .= " : [@$bind_params]" if @$bind_params;
+    }
 
-        if ($container->{useqq} || $ENV{DBIX_QUERYLOG_USEQQ}) {
-            local $Data::Dumper::Useqq  = 1;
-            local $Data::Dumper::Terse  = 1;
-            local $Data::Dumper::Indent = 0;
-            $ret = Data::Dumper::Dumper($ret);
-        }
+    if ($container->{compact} || $ENV{DBIX_QUERYLOG_COMPACT}) {
+        require SQL::Tokenizer;
+        $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
+    }
 
-        my $color = $container->{color} || $ENV{DBIX_QUERYLOG_COLOR};
-        my $localtime = do {
-            my ($sec, $min, $hour, $day, $mon, $year) = localtime;
-            sprintf '%d-%02d-%02dT%02d:%02d:%02d', $year + 1900, $mon + 1, $day, $hour, $min, $sec;
-        };
-        my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
-            $localtime, $caller->{pkg}, $time,
-            $color ? colored([$color], $ret) : $ret,
-            $caller->{file}, $caller->{line};
+    if ($container->{useqq} || $ENV{DBIX_QUERYLOG_USEQQ}) {
+        local $Data::Dumper::Useqq  = 1;
+        local $Data::Dumper::Terse  = 1;
+        local $Data::Dumper::Indent = 0;
+        $ret = Data::Dumper::Dumper($ret);
+    }
 
-        if (my $logger = $container->{logger}) {
-            $logger->log(
-                level   => $LOG_LEVEL,
-                message => $message,
-                params  => {
-                    localtime => $localtime,
-                    time      => $time,
-                    sql       => $ret,
-                    %$caller,
-                },
+    my $color = $container->{color} || $ENV{DBIX_QUERYLOG_COLOR};
+    my $localtime = do {
+        my ($sec, $min, $hour, $day, $mon, $year) = localtime;
+        sprintf '%d-%02d-%02dT%02d:%02d:%02d', $year + 1900, $mon + 1, $day, $hour, $min, $sec;
+    };
+    my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
+        $localtime, $caller->{pkg}, $time,
+        $color ? colored([$color], $ret) : $ret,
+        $caller->{file}, $caller->{line};
+
+    if (my $logger = $container->{logger}) {
+        $logger->log(
+            level   => $LOG_LEVEL,
+            message => $message,
+            params  => {
+                localtime   => $localtime,
+                time        => $time,
+                sql         => $sql,
+                bind_params => $bind_params,
+                %$caller,
+            },
+        );
+    }
+    else {
+        if (ref $OUTPUT eq 'CODE') {
+            $OUTPUT->(
+                level       => $LOG_LEVEL,
+                message     => $message,
+                localtime   => $localtime,
+                time        => $time,
+                sql         => $sql,
+                bind_params => $bind_params,
+                %$caller,
             );
         }
         else {
-            if (ref $OUTPUT eq 'CODE') {
-                $OUTPUT->(
-                    level     => $LOG_LEVEL,
-                    message   => $message,
-                    localtime => $localtime,
-                    time      => $time,
-                    sql       => $ret,
-                    %$caller,
-                );
-            }
-            else {
-                print {$OUTPUT} $message;
-            }
+            print {$OUTPUT} $message;
         }
     }
 }
@@ -448,8 +435,22 @@ or you can specify code reference:
 
   $DBIx::QueryLog::OUTPUT = sub {
       my %params = @_;
-      printf "[%s] [%s] [%s] [%s] %s at %s line %s\n",
-        @params{qw/localtime level pkg time sql file line/};
+
+      my $format = << 'FORMAT';
+  localtime  : %s       # ISO-8601 without timezone
+  level      : %s       # log level ($DBIx::QueryLog::LOG_LEVEL)
+  time       : %.f      # elasped time
+  sql        : %s       # executed query
+  bind_params: %s       # bind parameters
+  pkg        : %s       # caller package
+  file       : %s       # caller file
+  line       : %d       # caller line
+  FORMAT
+
+      printf $format,
+          @params{qw/localtime level pkg time sql/},
+          join(', ', @{$params{bind_params}}),
+          @params{qw/file line/};
   };
 
 Default C<< $OUTPUT >> is C<< STDERR >>.
