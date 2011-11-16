@@ -23,7 +23,6 @@ no_index:
 recommends:
   DBD::mysql: 0
   DBD::sqlite: 0
-  SQL::Tokenizer: 0
 requires:
   DBI: 0
   perl: 5.8.1
@@ -31,4 +30,4 @@ resources:
   bugtracker: https://github.com/xaicron/p5-DBIx-QueryLog/issues
   license: http://dev.perl.org/licenses/
   repository: https://github.com/xaicron/p5-DBIx-QueryLog
-version: 0.20
+version: 0.21
