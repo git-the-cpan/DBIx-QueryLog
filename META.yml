@@ -3,13 +3,14 @@ abstract: 'Logging queries for DBI'
 author:
   - 'xaicron <xaicron {at} cpan.org>'
 build_requires:
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.62
   Test::More: 0.96
   Test::Requires: 0
 configure_requires:
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.62
 distribution_type: module
-generated_by: 'Module::Install version 1.02'
+dynamic_config: 1
+generated_by: 'Module::Install version 1.04'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -30,4 +31,4 @@ resources:
   bugtracker: https://github.com/xaicron/p5-DBIx-QueryLog/issues
   license: http://dev.perl.org/licenses/
   repository: https://github.com/xaicron/p5-DBIx-QueryLog
-version: 0.21
+version: 0.22
