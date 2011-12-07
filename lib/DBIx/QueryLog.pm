@@ -11,7 +11,7 @@ use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -94,7 +94,7 @@ sub _st_execute {
         my @params = @_;
         my @types;
 
-        my $probability = $container->{probability};
+        my $probability = $container->{probability} || $ENV{DBIX_QUERYLOG_PROBABILITY};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($sth, @params);
         }
@@ -109,7 +109,7 @@ sub _st_execute {
         }
         $sth->{private_DBIx_QueryLog_params} = undef;
 
-        unless ($container->{skip_bind} && @params) {
+        unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @params) {
             my $dbh = $sth->{Database};
             $ret = _bind($dbh, $ret, \@params, \@types);
         }
@@ -148,13 +148,13 @@ sub _select_array {
         no warnings qw(redefine prototype);
         local *DBI::st::execute = $org_execute; # suppress duplicate logging
 
-        my $probability = $container->{probability};
+        my $probability = $container->{probability} || $ENV{DBIX_QUERYLOG_PROBABILITY};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
-        unless ($container->{skip_bind} && @bind) {
+        unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
 
@@ -188,13 +188,13 @@ sub _db_do {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
-        my $probability = $container->{probability};
+        my $probability = $container->{probability} || $ENV{DBIX_QUERYLOG_PROBABILITY};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
         my $ret = $stmt;
-        unless ($container->{skip_bind} && @bind) {
+        unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
 
@@ -238,7 +238,7 @@ sub _bind {
 sub _logging {
     my ($class, $ret, $time, $bind_params) = @_;
 
-    my $threshold = $container->{threshold};
+    my $threshold = $container->{threshold} || $ENV{DBIX_QUERYLOG_THRESHOLD};
     return unless !$threshold || $time > $threshold;
 
     $bind_params ||= [];
@@ -253,7 +253,7 @@ sub _logging {
     }
 
     my $sql = $ret;
-    if ($container->{skip_bind}) {
+    if ($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) {
         local $" = ', ';
         $ret .= " : [@$bind_params]" if @$bind_params;
     }
@@ -382,11 +382,15 @@ Logged if exceeding this value. (default not set)
 
   DBIx::QueryLog->threshold(0.1); # sec
 
+And, you can also specify C<< DBIX_QUERYLOG_THRESHOLD >> environment variable.
+
 =item probability
 
 Run only once per defined value. (default not set)
 
   DBIx::QueryLog->probability(100); # about 1/100
+
+And, you can also specify C<< DBIX_QUERYLOG_PROBABILITY >> environment variable.
 
 =item logger
 
@@ -403,6 +407,8 @@ If enabled, will be faster, but SQL is not bound.
   DBIx::QueryLog->skip_bind(1);
   my $row = $dbh->do(...);
   # => 'SELECT * FROM people WHERE user_id = ?' : [1986]
+
+And, you can also specify C<< DBIX_QUERYLOG_SKIP_BIND >> environment variable.
 
 =item color
 
