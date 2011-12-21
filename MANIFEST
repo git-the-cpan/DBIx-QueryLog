@@ -50,6 +50,7 @@ t/mysql/17_limit.t
 t/mysql/18_bind_param.t
 t/mysql/19_bind_with_type.t
 t/mysql/20_reuse_sql_type.t
+t/mysql/21_do_explain.t
 t/setup_mysqld.pl
 t/Util.pm
 xt/01_podspell.t
