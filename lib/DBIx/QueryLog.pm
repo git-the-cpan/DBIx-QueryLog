@@ -11,7 +11,7 @@ use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.25';
+our $VERSION = '0.26';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -506,6 +506,8 @@ B<< EXPERIMENTAL >>
 
 Logged Explain. (only supports mysql now)
 
+This feature requires C<< Text::ASCIITable >> installed.
+
   DBIx::QueryLog->explain(1);
   my $row = $dbh->do(...);
   # => SELECT * FROM peaple WHERE user_id = '1986'
@@ -575,6 +577,16 @@ Default C<< $OUTPUT >> is C<< STDERR >>.
 =head1 AUTHOR
 
 xaicron E<lt>xaicron {at} cpan.orgE<gt>
+
+=head1 THANKS TO
+
+tokuhitom
+
+yibe
+
+kamipo
+
+tomi-ru
 
 =head1 COPYRIGHT
 
