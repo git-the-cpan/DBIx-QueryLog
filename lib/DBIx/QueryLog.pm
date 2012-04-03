@@ -11,7 +11,7 @@ use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.27';
+our $VERSION = '0.28';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -238,16 +238,19 @@ sub _explain {
         return undef;
     }
 
-    return undef unless $ret =~ m|^
-        \s*                # white space
-        (?: /\* .*? \*/ )* # /* ... */
-        \s*                # while space
+    return undef unless $ret =~ m|
+        \A                     # at start of string
+        (?:
+            \s*                # white space
+            (?: /\* .*? \*/ )* # /* ... */
+            \s*                # while space
+        )*
         SELECT
-        \s*                # white space
-        .+?                # columns
-        \s*                # white space
+        \s*                    # white space
+        .+?                    # columns
+        \s*                    # white space
         FROM
-        \s*                # white space
+        \s*                    # white space
     |ixms;
 
     no warnings qw(redefine prototype);
@@ -611,6 +614,8 @@ yibe
 kamipo
 
 tomi-ru
+
+riywo
 
 =head1 COPYRIGHT
 
