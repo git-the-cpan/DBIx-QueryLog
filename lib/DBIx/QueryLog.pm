@@ -11,7 +11,7 @@ use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.28';
+our $VERSION = '0.29';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -75,6 +75,11 @@ sub unimport {
 
 *enable  = *begin = \&import;
 *disable = *end   = \&unimport;
+
+sub guard {
+    DBIx::QueryLog->enable();
+    return DBIx::QueryLog::Guard->new();
+}
 
 my $container = {};
 for my $accessor (qw{
@@ -234,11 +239,8 @@ sub _explain {
     my ($dbh, $ret, $params, $types) = @_;
     $types ||= [];
 
-    if ($dbh->{Driver}{Name} ne 'mysql') {
-        return undef;
-    }
-
-    return undef unless $ret =~ m|
+    return if $dbh->{Driver}{Name} ne 'mysql';
+    return unless $ret =~ m|
         \A                     # at start of string
         (?:
             \s*                # white space
@@ -336,7 +338,7 @@ sub _logging {
                 $skip_space = 1;
                 next;
             }
-            elsif ($s eq q{'} || $s eq q{"}) {
+            elsif ($s eq q{'} || $s eq q{"} || $s eq q{`}) {
                 unless ($quote_char) {
                     $quote_char = $s;
                 }
@@ -421,6 +423,15 @@ sub _logging {
         else {
             print {$OUTPUT} $message, $explain ? $explain->(print => 1) : ();
         }
+    }
+}
+
+{
+    package # hide from pause
+        DBIx::QueryLog::Guard;
+    sub new { bless [], shift }
+    sub DESTROY {
+        DBIx::QueryLog->disable();
     }
 }
 
@@ -542,6 +553,26 @@ if enabled, added DBI data_source in default message.
   # [2012-03-09T00:58:23] [main] [0.000953] [SQLite:dbname=/tmp/TrSATdY3cc] SELECT * FROM sqlite_master at foo.pl line 56
 
 And, you can also specify C<< DBIX_QUERYLOG_SHOW_DATASOURCE >> environment variable.
+
+=item guard
+
+Returned guard object.
+
+  use DBIx::QueryLog ();
+  {
+      my $guard = DBIx::QueryLog->guard;
+      # ... do something
+  }
+
+This code same as are:
+
+  use DBIx::QueryLog ();
+  
+  DBIx::QueryLog->enable;
+  # ... do something
+  DBIx::QueryLog->disable;
+
+SEE ALSO L<< Localization >> section.
 
 =back
 
