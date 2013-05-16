@@ -11,7 +11,7 @@ use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.33';
+our $VERSION = '0.34';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_bind_param            = \&DBI::st::bind_param;
@@ -708,6 +708,12 @@ kamipo
 tomi-ru
 
 riywo
+
+makamaka
+
+=head1 BUG REPORTING
+
+Plese use github issues: L<< https://github.com/xaicron/p5-DBIx-QueryLog/issues >>.
 
 =head1 COPYRIGHT
 
