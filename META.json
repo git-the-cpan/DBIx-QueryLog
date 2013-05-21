@@ -4,7 +4,7 @@
       "xaicron <xaicron {at} cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v0.4.2",
+   "generated_by" : "Minilla/v0.4.3",
    "license" : "perl_5",
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
@@ -24,14 +24,8 @@
    },
    "prereqs" : {
       "build" : {
-         "recommends" : {
-            "Test::PostgreSQL" : "0.10",
-            "Test::mysqld" : "0.17"
-         },
          "requires" : {
-            "ExtUtils::MakeMaker" : "6.59",
-            "Test::More" : "0.96",
-            "Test::Requires" : "0"
+            "ExtUtils::MakeMaker" : "6.59"
          }
       },
       "configure" : {
@@ -63,12 +57,22 @@
             "Time::HiRes" : "0",
             "perl" : "5.008001"
          }
+      },
+      "test" : {
+         "recommends" : {
+            "Test::PostgreSQL" : "0.10",
+            "Test::mysqld" : "0.17"
+         },
+         "requires" : {
+            "Test::More" : "0.96",
+            "Test::Requires" : "0"
+         }
       }
    },
    "provides" : {
       "DBIx::QueryLog" : {
          "file" : "lib/DBIx/QueryLog.pm",
-         "version" : "0.34"
+         "version" : "0.35"
       }
    },
    "release_status" : "stable",
@@ -82,7 +86,7 @@
          "web" : "https://github.com/xaicron/p5-DBIx-QueryLog"
       }
    },
-   "version" : "0.34",
+   "version" : "0.35",
    "x_contributors" : [
       "Yuki Ibe <yibe@yibe.org>",
       "Ryuta Kamizono <kamipo@gmail.com>",
