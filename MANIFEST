@@ -25,6 +25,7 @@ t/18_bind_param.t
 t/20_localizetion.t
 t/21_guard.t
 t/22_ignore_trace.t
+t/23_do_explain.t
 t/30_logger.t
 t/31_output.t
 t/32_color.t
