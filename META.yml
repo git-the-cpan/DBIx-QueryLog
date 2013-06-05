@@ -29,7 +29,7 @@ no_index:
 provides:
   DBIx::QueryLog:
     file: lib/DBIx/QueryLog.pm
-    version: 0.36
+    version: 0.37
 recommends:
   DBD::Pg: 0
   DBD::SQLite: 0
@@ -45,11 +45,12 @@ resources:
   bugtracker: https://github.com/xaicron/p5-DBIx-QueryLog/issues
   homepage: https://github.com/xaicron/p5-DBIx-QueryLog
   repository: git://github.com/xaicron/p5-DBIx-QueryLog.git
-version: 0.36
+version: 0.37
 x_contributors:
   - 'Yuki Ibe <yibe@yibe.org>'
   - 'Ryuta Kamizono <kamipo@gmail.com>'
   - 'tokuhirom <tokuhirom@gmail.com>'
   - 'makamaka <makamaka.donzoko@gmail.com>'
   - 'cho45 <cho45@lowreal.net>'
-  - 'xaicron <xaicron@gmail.com>'
+  - 'Syohei YOSHIDA <syohex@gmail.com>'
+  - 'Yuji Shimada <xaicron@gmail.com>'
