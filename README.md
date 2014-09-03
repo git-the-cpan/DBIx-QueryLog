@@ -82,8 +82,6 @@ Currently, works on DBD::mysql, DBD::Pg and DBD::sqlite.
 
     Logged Explain.
 
-    This feature requires `Text::ASCIITable` installed.
-
         DBIx::QueryLog->explain(1);
         my $row = $dbh->do(...);
         # => SELECT * FROM peaple WHERE user_id = '1986'
@@ -202,10 +200,10 @@ or you can specify code reference:
     line       : %d       # caller line
     FORMAT
 
-      printf $format,
-          @params{qw/localtime level pkg time data_source sql/},
-          join(', ', @{$params{bind_params}}),
-          @params{qw/file line/};
+        printf $format,
+            @params{qw/localtime level pkg time data_source sql/},
+            join(', ', @{$params{bind_params}}),
+            @params{qw/file line/};
 
         printf "AutoCommit?: %d\n", $params->{dbh}->{AutoCommit} ? 1 : 0;
     };

@@ -4,7 +4,7 @@
       "xaicron <xaicron {at} cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v0.11.0",
+   "generated_by" : "Minilla/v2.1.1",
    "license" : [
       "perl_5"
    ],
@@ -33,15 +33,14 @@
       },
       "configure" : {
          "requires" : {
-            "CPAN::Meta" : "0",
-            "CPAN::Meta::Prereqs" : "0",
             "Module::Build" : "0.38"
          }
       },
       "develop" : {
          "requires" : {
             "Test::CPAN::Meta" : "0",
-            "Test::MinimumVersion" : "0.10108",
+            "Test::MinimumVersion::Fast" : "0.04",
+            "Test::PAUSE::Permissions" : "0.04",
             "Test::Pod" : "1.41",
             "Test::Spellunker" : "v0.2.7"
          }
@@ -50,13 +49,13 @@
          "recommends" : {
             "DBD::Pg" : "0",
             "DBD::SQLite" : "0",
-            "DBD::mysql" : "0",
-            "Text::ASCIITable" : "0"
+            "DBD::mysql" : "0"
          },
          "requires" : {
             "DBI" : "0",
             "Data::Dumper" : "0",
             "Term::ANSIColor" : "0",
+            "Text::ASCIITable" : "0",
             "Time::HiRes" : "0",
             "perl" : "5.008001"
          }
@@ -75,7 +74,7 @@
    "provides" : {
       "DBIx::QueryLog" : {
          "file" : "lib/DBIx/QueryLog.pm",
-         "version" : "0.38"
+         "version" : "0.39"
       }
    },
    "release_status" : "stable",
@@ -89,14 +88,14 @@
          "web" : "https://github.com/xaicron/p5-DBIx-QueryLog"
       }
    },
-   "version" : "0.38",
+   "version" : "0.39",
    "x_contributors" : [
       "Yuki Ibe <yibe@yibe.org>",
-      "Ryuta Kamizono <kamipo@gmail.com>",
       "tokuhirom <tokuhirom@gmail.com>",
       "cho45 <cho45@lowreal.net>",
       "Syohei YOSHIDA <syohex@gmail.com>",
       "makamaka <makamaka.donzoko@gmail.com>",
+      "Ryuta Kamizono <kamipo@gmail.com>",
       "Yuji Shimada <xaicron@gmail.com>"
    ]
 }
