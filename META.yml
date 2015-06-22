@@ -9,7 +9,7 @@ build_requires:
 configure_requires:
   Module::Build: '0.38'
 dynamic_config: 0
-generated_by: 'Minilla/v2.1.1, CPAN::Meta::Converter version 2.142060'
+generated_by: 'Minilla/v2.1.1, CPAN::Meta::Converter version 2.143240'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -28,7 +28,7 @@ no_index:
 provides:
   DBIx::QueryLog:
     file: lib/DBIx/QueryLog.pm
-    version: '0.39'
+    version: '0.40'
 recommends:
   DBD::Pg: '0'
   DBD::SQLite: '0'
@@ -43,8 +43,8 @@ requires:
 resources:
   bugtracker: https://github.com/xaicron/p5-DBIx-QueryLog/issues
   homepage: https://github.com/xaicron/p5-DBIx-QueryLog
-  repository: git://github.com/xaicron/p5-DBIx-QueryLog.git
-version: '0.39'
+  repository: git://github.com/xaicron/p5-DBIx-QueryLog
+version: '0.40'
 x_contributors:
   - 'Yuki Ibe <yibe@yibe.org>'
   - 'tokuhirom <tokuhirom@gmail.com>'
@@ -53,3 +53,4 @@ x_contributors:
   - 'makamaka <makamaka.donzoko@gmail.com>'
   - 'Ryuta Kamizono <kamipo@gmail.com>'
   - 'Yuji Shimada <xaicron@gmail.com>'
+  - 'Kenichi Ishigaki <ishigaki@cpan.org>'
