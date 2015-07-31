@@ -4,7 +4,7 @@
       "xaicron <xaicron {at} cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v2.1.1",
+   "generated_by" : "Minilla/v2.5.0",
    "license" : [
       "perl_5"
    ],
@@ -74,7 +74,7 @@
    "provides" : {
       "DBIx::QueryLog" : {
          "file" : "lib/DBIx/QueryLog.pm",
-         "version" : "0.40"
+         "version" : "0.41"
       }
    },
    "release_status" : "stable",
@@ -84,11 +84,11 @@
       },
       "homepage" : "https://github.com/xaicron/p5-DBIx-QueryLog",
       "repository" : {
-         "url" : "git://github.com/xaicron/p5-DBIx-QueryLog",
+         "url" : "git://github.com/xaicron/p5-DBIx-QueryLog.git",
          "web" : "https://github.com/xaicron/p5-DBIx-QueryLog"
       }
    },
-   "version" : "0.40",
+   "version" : "0.41",
    "x_contributors" : [
       "Yuki Ibe <yibe@yibe.org>",
       "tokuhirom <tokuhirom@gmail.com>",
@@ -96,7 +96,8 @@
       "Syohei YOSHIDA <syohex@gmail.com>",
       "makamaka <makamaka.donzoko@gmail.com>",
       "Ryuta Kamizono <kamipo@gmail.com>",
-      "Yuji Shimada <xaicron@gmail.com>",
-      "Kenichi Ishigaki <ishigaki@cpan.org>"
-   ]
+      "Kenichi Ishigaki <ishigaki@cpan.org>",
+      "xaicron <xaicron@gmail.com>"
+   ],
+   "x_serialization_backend" : "JSON::PP version 2.27300"
 }
